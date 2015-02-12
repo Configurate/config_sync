@@ -1,0 +1,28 @@
+services:
+  config_sync.lister:
+    class: Drupal\config_sync\ConfigSyncLister
+    arguments: 
+     - '@config.storage'
+     - '@config_sync.snapshot_storage'
+     - '@config.manager'
+  config_sync.manager:
+    class: Drupal\config_sync\ConfigSyncManager
+    arguments: 
+     - '@config_update.config_update'
+     - '@config_sync.lister'
+     - '@config_sync.snapshotter'
+  config_sync.snapshot_storage:
+    class: Drupal\Core\Config\DatabaseStorage
+    arguments:
+     - '@database'
+     - 'config_sync_snapshot'
+    tags:
+      - { name: backend_overridable }
+  config_sync.snapshotter:
+    class: Drupal\config_sync\ConfigSyncSnapshotter
+    arguments: 
+     - '@config_update.config_diff'
+     - '@config_update.config_list'
+     - '@config_update.config_update'
+     - '@config.storage'
+     - '@config_sync.snapshot_storage'
