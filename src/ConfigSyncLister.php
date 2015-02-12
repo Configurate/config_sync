@@ -9,6 +9,7 @@ namespace Drupal\config_sync;
 
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\StorageInterface;
+use Drupal\config_sync\ConfigSyncStorageComparer;
 
 /**
  * Provides methods related to listing configuration changes.
@@ -90,7 +91,7 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
 
     if (is_dir($config_path)) {
       $install_storage = new FileStorage($config_path);
-      $snapshot_comparer = new StorageComparer($this->activeStorage, $install_storage, $this->configManager);
+      $snapshot_comparer = new ConfigSyncStorageComparer($this->activeStorage, $install_storage, $this->configManager);
       if ($snapshot_comparer->createChangelist()->hasChanges()) {
         $changelist = $snapshot_comparer->getChangelist();
         // We're only concerned with creates and updates.
@@ -110,7 +111,7 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
    */
   protected function getSnapshotChangelist() {
     if (empty($this->snapshotChangelist)) {
-      $snapshot_comparer = new StorageComparer($this->activeStorage, $this->snapshotStorage, $this->configManager);
+      $snapshot_comparer = new ConfigSyncStorageComparer($this->activeStorage, $this->snapshotStorage, $this->configManager);
       $snapshot_comparer->createChangelist();
       $this->snapshotChangelist = $snapshot_comparer->getChangelist();
     }
