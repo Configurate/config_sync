@@ -8,8 +8,11 @@
 namespace Drupal\config_sync;
 
 use Drupal\Core\Config\ConfigManagerInterface;
+use Drupal\Core\Config\FileStorage;
+use Drupal\Core\Config\InstallStorage;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\config_sync\ConfigSyncStorageComparer;
+use Drupal\config_update\ConfigDiffInterface;
 
 /**
  * Provides methods related to listing configuration changes.
@@ -19,6 +22,13 @@ use Drupal\config_sync\ConfigSyncStorageComparer;
  * provided configuration as installed.
  */
 class ConfigSyncLister implements ConfigSyncListerInterface {
+
+  /**
+   * The config differ.
+   *
+   * @var \Drupal\config_update\ConfigDiffInterface
+   */
+  protected $configDiff;
 
   /**
    * The active configuration storage.
@@ -55,6 +65,8 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
   /**
    * Constructs a ConfigSyncLister object.
    *
+   * @param \Drupal\config_update\ConfigDiffInterface $config_diff
+   *   The config differ.
    * @param \Drupal\Core\Config\StorageInterface $active_storage
    *   The active storage.
    * @param \Drupal\Core\Config\StorageInterface $snapshot_storage
@@ -62,7 +74,8 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
    * @param \Drupal\Core\Config\ConfigManagerInterface $config_manager
    *   The configuration manager.
    */
-  public function __construct(StorageInterface $active_storage, StorageInterface $snapshot_storage, ConfigManagerInterface $config_manager) {
+  public function __construct(ConfigDiffInterface $config_diff, StorageInterface $active_storage, StorageInterface $snapshot_storage, ConfigManagerInterface $config_manager) {
+    $this->configDiff = $config_diff;
     $this->activeStorage = $active_storage;
     $this->snapshotStorage = $snapshot_storage;
     $this->configManager = $config_manager;
@@ -75,12 +88,17 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
     $changelist = array();
     $extension_config = \Drupal::config('core.extension');
     foreach (array('module', 'theme') as $type) {
-      $changelist[$type] = array();
       $names = array_keys($extension_config->get($type));
       foreach ($names as $name) {
-        $changelist[$type][$name] = $this->getExtensionChangelist($type, $name, $safe_only = TRUE);
+        if ($extension_changelist = $this->getExtensionChangelist($type, $name, $safe_only = TRUE)) {
+          if (!isset($changelist[$type])) {
+            $changelist[$type] = array();
+          }
+          $changelist[$type][$name] = $extension_changelist;
+        }
       }
     }
+    return $changelist;
   }
 
   /**
@@ -91,16 +109,15 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
 
     if (is_dir($config_path)) {
       $install_storage = new FileStorage($config_path);
-      $snapshot_comparer = new ConfigSyncStorageComparer($this->activeStorage, $install_storage, $this->configManager);
-      if ($snapshot_comparer->createChangelist()->hasChanges()) {
-        $changelist = $snapshot_comparer->getChangelist();
-        // We're only concerned with creates and updates.
-        $changelist = array_intersect_key($changelist, array_fill_keys(array('create', 'update'), NULL));
-        if ($safe_only) {
-          $this->setSafeChanges($changelist);
-        }
-        return $changelist;
+      $snapshot_comparer = new ConfigSyncStorageComparer($install_storage, $this->activeStorage, $this->configManager, $this->configDiff);
+      $snapshot_comparer->createChangelist();
+      $changelist = $snapshot_comparer->getChangelist();
+      // We're only concerned with creates and updates.
+      $changelist = array_intersect_key($changelist, array_fill_keys(array('create', 'update'), NULL));
+      if ($safe_only) {
+        $this->setSafeChanges($changelist);
       }
+      return array_filter($changelist);
     }
 
     return array();
@@ -111,7 +128,7 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
    */
   protected function getSnapshotChangelist() {
     if (empty($this->snapshotChangelist)) {
-      $snapshot_comparer = new ConfigSyncStorageComparer($this->activeStorage, $this->snapshotStorage, $this->configManager);
+      $snapshot_comparer = new ConfigSyncStorageComparer($this->snapshotStorage, $this->activeStorage, $this->configManager, $this->configDiff);
       $snapshot_comparer->createChangelist();
       $this->snapshotChangelist = $snapshot_comparer->getChangelist();
     }
@@ -127,8 +144,8 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
    * provided configuration as installed.
    *
    * @param array &$changelist
-   *   Associative array of configuration changes keyed by extension type
-   *   (module or theme) in which values are arrays keyed by extension name.
+   *   Associative array of configuration changes keyed by change type (create,
+   *   update, delete, rename).
    */
   protected function setSafeChanges(array &$changelist) {
     $snapshot_changelist = $this->getSnapshotChangelist();

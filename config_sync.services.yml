@@ -2,6 +2,7 @@ services:
   config_sync.lister:
     class: Drupal\config_sync\ConfigSyncLister
     arguments: 
+     - '@config_update.config_diff'
      - '@config.storage'
      - '@config_sync.snapshot_storage'
      - '@config.manager'
