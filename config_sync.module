@@ -14,7 +14,7 @@ function config_sync_modules_installed($module_names) {
 /**
  * Implements hook_themes_installed().
  */
-function config_sync_theems_installed($theme_names) {
+function config_sync_themes_installed($theme_names) {
   config_sync_create_extension_snapshot('theme', $theme_names);
 }
 
