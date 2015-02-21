@@ -23,7 +23,5 @@ services:
     class: Drupal\config_sync\ConfigSyncSnapshotter
     arguments: 
      - '@config_update.config_diff'
-     - '@config_update.config_list'
-     - '@config_update.config_update'
      - '@config.storage'
      - '@config_sync.snapshot_storage'
