@@ -59,24 +59,40 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
    * {@inheritdoc}
    */
   public function createExtensionSnapshot($type, $name) {
+    // @todo: handle the fact that the install profile may re-provide
+    // configuration items that belong to another extension.
+
     // List the configuration items provided by the requested extension.
     if ($extension_storage = $this->getExtensionInstallStorage($type, $name)) {
       $item_names = $extension_storage->listAll();
       foreach ($item_names as $item_name) {
-        $extension_value = $extension_storage->read($item_name);
-        $active_value = $this->activeStorage->read($item_name);
-        // If the active value is equivalent to the extension-provided one, use
-        // the active value so that it will include UUID values, used to
-        // determine rename changes..
-        if ($this->configDiff->same($extension_value, $active_value)) {
-          $value = $active_value;
-        }
-        else {
-          $value = $extension_value;
-        }
-        $this->snapshotStorage->write($item_name, $value);
+        $this->createItemSnapshot($extension_storage, $item_name);
       }
     }
+  }
+
+  /**
+   * Creates a snapshot of a given configuration item as provided by an
+   * extension.
+   *
+   * @param FileStorage $extension_storage
+   *   An extension's configuration file storage.
+   * @param string $item_name
+   *   The name of the configuration item.
+   */
+  function createItemSnapshot(FileStorage $extension_storage, $item_name) {
+    $extension_value = $extension_storage->read($item_name);
+    $active_value = $this->activeStorage->read($item_name);
+    // If the active value is equivalent to the extension-provided one, use
+    // the active value so that it will include UUID values, used to
+    // determine rename changes..
+    if ($this->configDiff->same($extension_value, $active_value)) {
+      $value = $active_value;
+    }
+    else {
+      $value = $extension_value;
+    }
+    $this->snapshotStorage->write($item_name, $value);
   }
 
   /**
