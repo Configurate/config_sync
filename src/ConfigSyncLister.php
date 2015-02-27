@@ -7,6 +7,7 @@
 
 namespace Drupal\config_sync;
 
+use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\FileStorage;
 use Drupal\Core\Config\InstallStorage;
@@ -114,6 +115,23 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
       $changelist = $snapshot_comparer->getChangelist();
       // We're only concerned with creates and updates.
       $changelist = array_intersect_key($changelist, array_fill_keys(array('create', 'update'), NULL));
+
+      // Only create items owned by enabled extensions.
+      // @see ConfigInstaller::listDefaultConfigToInstall()
+      if (isset($changelist['create'])) {
+        // Core can provide configuration.
+        $enabled_extensions = array('core');
+        $extension_config = \Drupal::config('core.extension');
+        foreach (array('module', 'theme') as $type) {
+          $enabled_extensions = array_merge($enabled_extensions, array_keys($extension_config->get($type)));
+        }
+        $changelist['create'] = array_filter($changelist['create'], function ($config_name) use ($enabled_extensions) {
+          // Ensure the configuration is provided by an enabled extension.
+          $provider = Unicode::substr($config_name, 0, strpos($config_name, '.'));
+          return in_array($provider, $enabled_extensions);
+        });
+      }
+
       if ($safe_only) {
         $this->setSafeChanges($changelist);
       }

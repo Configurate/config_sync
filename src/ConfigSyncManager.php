@@ -79,9 +79,6 @@ class ConfigSyncManager implements ConfigSyncManagerInterface {
       $changelist = $this->configSyncLister->getExtensionChangelist($type, $name, $safe_only);
     }
     // Process create changes.
-    // @todo: limit to configuration owned by an enabled extension.
-    // @todo: use ConfigInstaller::listDefaultConfigToInstall()?
-    // @see ConfigInstaller::listDefaultConfigToInstall()
     if (!empty($changelist['create'])) {
       foreach ($changelist['create'] as $item_name) {
         // Passing an empty string for the first argument indicates that
