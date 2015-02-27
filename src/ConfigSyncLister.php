@@ -132,6 +132,12 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
         });
       }
 
+      // Unset any changes for components overridden by the install profile.
+      if (isset($changelist['update']) && !($type == 'module' && $name == drupal_get_profile())) {
+        $install_profile_config = $this->listInstallProfileConfig();
+        $changelist['update'] = array_diff($changelist['update'], $install_profile_config);
+      }
+
       if ($safe_only) {
         $this->setSafeChanges($changelist);
       }
@@ -139,6 +145,26 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
     }
 
     return array();
+  }
+
+  /**
+   * Returns a list of configuration items provided by the install profile.
+   */
+  protected function listInstallProfileConfig() {
+    static $item_names = NULL;
+
+    if (!isset($item_names)) {
+      $config_path = drupal_get_path('profile', drupal_get_profile()) . '/' . InstallStorage::CONFIG_INSTALL_DIRECTORY;
+      if (is_dir($config_path)) {
+        $install_storage = new FileStorage($config_path);
+        $item_names = $install_storage->listAll();
+      }
+      else {
+        $item_names = array();
+      }
+    }
+
+    return $item_names;
   }
 
   /**

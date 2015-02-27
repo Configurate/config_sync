@@ -59,9 +59,6 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
    * {@inheritdoc}
    */
   public function createExtensionSnapshot($type, $name) {
-    // @todo: handle the fact that the install profile may re-provide
-    // configuration items that belong to another extension.
-
     // List the configuration items provided by the requested extension.
     if ($extension_storage = $this->getExtensionInstallStorage($type, $name)) {
       $item_names = $extension_storage->listAll();

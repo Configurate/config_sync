@@ -71,9 +71,6 @@ class ConfigSyncManager implements ConfigSyncManagerInterface {
    * {@inheritdoc}
    */
   public function updateExtension($type, $name, array $changelist = array(), $safe_only = TRUE) {
-    // @todo: handle the fact that the install profile may re-provide
-    // configuration items that belong to another extension.
-
     // If no change list was passed, load one.
     if (empty($changelist)) {
       $changelist = $this->configSyncLister->getExtensionChangelist($type, $name, $safe_only);
