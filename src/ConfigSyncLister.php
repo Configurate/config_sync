@@ -122,8 +122,8 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
         // Core can provide configuration.
         $enabled_extensions = array('core');
         $extension_config = \Drupal::config('core.extension');
-        foreach (array('module', 'theme') as $type) {
-          $enabled_extensions = array_merge($enabled_extensions, array_keys($extension_config->get($type)));
+        foreach (array('module', 'theme') as $extension_type) {
+          $enabled_extensions = array_merge($enabled_extensions, array_keys($extension_config->get($extension_type)));
         }
         $changelist['create'] = array_filter($changelist['create'], function ($config_name) use ($enabled_extensions) {
           // Ensure the configuration is provided by an enabled extension.
