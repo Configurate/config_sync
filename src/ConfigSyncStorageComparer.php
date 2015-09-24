@@ -7,7 +7,9 @@
 
 namespace Drupal\config_sync;
 
+use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\StorageComparer;
+use Drupal\Core\Config\StorageInterface;
 use Drupal\config_update\ConfigDiffInterface;
 
 /**
@@ -58,7 +60,9 @@ class ConfigSyncStorageComparer extends StorageComparer {
    */
   protected function addChangelistUpdate($collection) {
     foreach (array_intersect($this->sourceNames[$collection], $this->targetNames[$collection]) as $name) {
-      if (!$this->configDiff->same($this->sourceData[$collection][$name], $this->targetData[$collection][$name])) {
+      $source_data = $this->getSourceStorage($collection)->read($name);
+      $target_data = $this->getTargetStorage($collection)->read($name);
+      if (!$this->configDiff->same($source_data, $target_data)) {
         $this->addChangeList($collection, 'update', array($name));
       }
     }
