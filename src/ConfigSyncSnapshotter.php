@@ -33,11 +33,18 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
   protected $activeStorage;
 
   /**
-   * The snapshot config storage.
+   * The snapshot config storage for values from the extension storage.
    *
    * @var \Drupal\Core\Config\StorageInterface
    */
-  protected $snapshotStorage;
+  protected $snapshotExtensionStorage;
+
+  /**
+   * The snapshot config storage for values from the active storage.
+   *
+   * @var \Drupal\Core\Config\StorageInterface
+   */
+  protected $snapshotActiveStorage;
 
   /**
    * Constructs a ConfigSyncSnapshotter object.
@@ -46,13 +53,16 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
    *   The config differ.
    * @param \Drupal\Core\Config\StorageInterface $active_storage
    *   The active storage.
-   * @param \Drupal\Core\Config\StorageInterface $snapshot_storage
-   *   The snapshot storage.
+   * @param \Drupal\Core\Config\StorageInterface $snapshot_extension_storage
+   *   The snapshot storage for the items from the extension storage.
+   * @param \Drupal\Core\Config\StorageInterface $snapshot_active_storage
+   *   The snapshot storage for the items from the active storage.
    */
-  public function __construct(ConfigDiffInterface $config_diff, StorageInterface $active_storage, StorageInterface $snapshot_storage) {
+  public function __construct(ConfigDiffInterface $config_diff, StorageInterface $active_storage, StorageInterface $snapshot_extension_storage, StorageInterface $snapshot_active_storage) {
     $this->configDiff = $config_diff;
     $this->activeStorage = $active_storage;
-    $this->snapshotStorage = $snapshot_storage;
+    $this->snapshotExtensionStorage = $snapshot_extension_storage;
+    $this->snapshotActiveStorage = $snapshot_active_storage;
   }
 
   /**
@@ -78,18 +88,13 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
    *   The name of the configuration item.
    */
   function createItemSnapshot(FileStorage $extension_storage, $item_name) {
+    // Snapshot the configuration item as provided by the extension.
     $extension_value = $extension_storage->read($item_name);
+    $this->snapshotExtensionStorage->write($item_name, $extension_value);
+
+    // Snapshot the configuration item as installed in the active storage.
     $active_value = $this->activeStorage->read($item_name);
-    // If the active value is equivalent to the extension-provided one, use
-    // the active value so that it will include UUID values, used to
-    // determine rename changes..
-    if ($this->configDiff->same($extension_value, $active_value)) {
-      $value = $active_value;
-    }
-    else {
-      $value = $extension_value;
-    }
-    $this->snapshotStorage->write($item_name, $value);
+    $this->snapshotActiveStorage->write($item_name, $active_value);
   }
 
   /**
@@ -140,7 +145,8 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
    * {@inheritdoc}
    */
   public function deleteSnapshot() {
-    $this->snapshotStorage->deleteAll();
+    $this->snapshotExtensionStorage->deleteAll();
+    $this->snapshotActiveStorage->deleteAll();
   }
 
 }

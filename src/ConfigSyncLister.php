@@ -39,11 +39,18 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
   protected $activeStorage;
 
   /**
-   * The snapshot configuration storage.
+   * The snapshot config storage for values from the extension storage.
    *
    * @var \Drupal\Core\Config\StorageInterface
    */
-  protected $snapshotStorage;
+  protected $snapshotExtensionStorage;
+
+  /**
+   * The snapshot config storage for values from the active storage.
+   *
+   * @var \Drupal\Core\Config\StorageInterface
+   */
+  protected $snapshotActiveStorage;
 
   /**
    * The configuration manager.
@@ -57,11 +64,11 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
    * configuration and the active configuration storage.
    *
    * This property is not populated until
-   * ConfigSyncLister::getSnapshotChangelist() is called.
+   * ConfigSyncLister::getSnapshotActiveChangelist() is called.
    *
    * @var array
    */
-  protected $snapshotChangelist;
+  protected $snapshotActiveChangelist;
 
   /**
    * Constructs a ConfigSyncLister object.
@@ -70,15 +77,18 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
    *   The config differ.
    * @param \Drupal\Core\Config\StorageInterface $active_storage
    *   The active storage.
-   * @param \Drupal\Core\Config\StorageInterface $snapshot_storage
-   *   The snapshot storage.
+   * @param \Drupal\Core\Config\StorageInterface $snapshot_extension_storage
+   *   The snapshot storage for the items from the extension storage.
+   * @param \Drupal\Core\Config\StorageInterface $snapshot_active_storage
+   *   The snapshot storage for the items from the active storage.
    * @param \Drupal\Core\Config\ConfigManagerInterface $config_manager
    *   The configuration manager.
    */
-  public function __construct(ConfigDiffInterface $config_diff, StorageInterface $active_storage, StorageInterface $snapshot_storage, ConfigManagerInterface $config_manager) {
+  public function __construct(ConfigDiffInterface $config_diff, StorageInterface $active_storage, StorageInterface $snapshot_extension_storage, StorageInterface $snapshot_active_storage, ConfigManagerInterface $config_manager) {
     $this->configDiff = $config_diff;
     $this->activeStorage = $active_storage;
-    $this->snapshotStorage = $snapshot_storage;
+    $this->snapshotExtensionStorage = $snapshot_extension_storage;
+    $this->snapshotActiveStorage = $snapshot_active_storage;
     $this->configManager = $config_manager;
   }
 
@@ -112,27 +122,12 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
 
     if (is_dir($config_path)) {
       $install_storage = new FileStorage($config_path);
-      $snapshot_comparer = new ConfigSyncStorageComparer($install_storage, $this->activeStorage, $this->configManager, $this->configDiff);
+      $snapshot_comparer = new ConfigSyncStorageComparer($install_storage, $this->snapshotExtensionStorage, $this->configManager, $this->configDiff);
       $snapshot_comparer->createChangelist();
       $changelist = $snapshot_comparer->getChangelist();
+
       // We're only concerned with creates and updates.
       $changelist = array_intersect_key($changelist, array_fill_keys(array('create', 'update'), NULL));
-
-      // Only create items owned by enabled extensions.
-      // @see ConfigInstaller::listDefaultConfigToInstall()
-      if (isset($changelist['create'])) {
-        // Core can provide configuration.
-        $enabled_extensions = array('core');
-        $extension_config = \Drupal::config('core.extension');
-        foreach (array('module', 'theme') as $extension_type) {
-          $enabled_extensions = array_merge($enabled_extensions, array_keys($extension_config->get($extension_type)));
-        }
-        $changelist['create'] = array_filter($changelist['create'], function ($config_name) use ($enabled_extensions) {
-          // Ensure the configuration is provided by an enabled extension.
-          $provider = Unicode::substr($config_name, 0, strpos($config_name, '.'));
-          return in_array($provider, $enabled_extensions);
-        });
-      }
 
       // Unset any changes for components overridden by the install profile.
       if (isset($changelist['update']) && !($type == 'module' && $name == drupal_get_profile())) {
@@ -143,6 +138,7 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
       if ($safe_only) {
         $this->setSafeChanges($changelist);
       }
+
       return array_filter($changelist);
     }
 
@@ -172,13 +168,13 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
   /**
    * {@inheritdoc}
    */
-  protected function getSnapshotChangelist() {
-    if (empty($this->snapshotChangelist)) {
-      $snapshot_comparer = new ConfigSyncStorageComparer($this->snapshotStorage, $this->activeStorage, $this->configManager, $this->configDiff);
+  protected function getSnapshotActiveChangelist() {
+    if (empty($this->snapshotActiveChangelist)) {
+      $snapshot_comparer = new ConfigSyncStorageComparer($this->snapshotActiveStorage, $this->activeStorage, $this->configManager, $this->configDiff);
       $snapshot_comparer->createChangelist();
-      $this->snapshotChangelist = $snapshot_comparer->getChangelist();
+      $this->snapshotActiveChangelist = $snapshot_comparer->getChangelist();
     }
-    return $this->snapshotChangelist;
+    return $this->snapshotActiveChangelist;
   }
 
   /**
@@ -194,7 +190,8 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
    *   update, delete, rename).
    */
   protected function setSafeChanges(array &$changelist) {
-    $snapshot_changelist = $this->getSnapshotChangelist();
+    $snapshot_changelist = $this->getSnapshotActiveChangelist();
+
     // Items that have been deleted or renamed are not safe to create.
     if (!empty($changelist['create'])) {
       $changelist['create'] = array_diff(
@@ -203,6 +200,7 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
         $snapshot_changelist['rename']
       );
     }
+
     // Updates in the snapshot changes indicate customized items, which are
     // not safe to update.
     if (!empty($changelist['update'])) {
