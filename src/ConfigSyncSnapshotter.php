@@ -106,7 +106,9 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
    *   FALSE if there is no such directory.
    */
   protected function getExtensionInstallStorage($type, $name) {
-    $config_path = drupal_get_path($type, $name) . '/' . InstallStorage::CONFIG_INSTALL_DIRECTORY;
+    // drupal_get_path() expects 'profile' type for profile.
+    $path_type = $type == 'module' && $name == drupal_get_profile() ? 'profile' : $type;
+    $config_path = drupal_get_path($path_type, $name) . '/' . InstallStorage::CONFIG_INSTALL_DIRECTORY;
     if (is_dir($config_path)) {
       return new FileStorage($config_path);
     }
