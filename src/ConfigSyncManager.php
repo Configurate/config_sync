@@ -7,9 +7,10 @@
 
 namespace Drupal\config_sync;
 
-use Drupal\config_update\ConfigRevertInterface;
+use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\config_sync\ConfigSyncListerInterface;
 use Drupal\config_sync\ConfigSyncSnapshotterInterface;
+use Drupal\config_update\ConfigRevertInterface;
 
 /**
  * Provides methods for updating site configuration from extensions.
@@ -33,11 +34,18 @@ class ConfigSyncManager implements ConfigSyncManagerInterface {
   protected $configSyncLister;
 
   /**
-   * The config sync lister.
+   * The config sync snapshotter.
    *
    * @var \Drupal\config_sync\ConfigSyncSnapshotterInterface
    */
   protected $configSyncSnapshotter;
+
+  /**
+   * The configuration manager.
+   *
+   * @var \Drupal\Core\Config\ConfigManagerInterface
+   */
+  protected $configManager;
 
   /**
    * Constructs a ConfigSyncManager object.
@@ -46,13 +54,16 @@ class ConfigSyncManager implements ConfigSyncManagerInterface {
    *   The config reverter.
    * @param \Drupal\config_update\ConfigSyncListerInterface $config_sync_lister
    *   The config lister.
-     * @param \Drupal\config_update\ConfigSyncSnapshotterInterface $config_sync_snapshotter
+   * @param \Drupal\config_update\ConfigSyncSnapshotterInterface $config_sync_snapshotter
    *   The config lister.
+   * @param \Drupal\Core\Config\ConfigManagerInterface $config_manager
+   *   The configuration manager.
    */
-  public function __construct(ConfigRevertInterface $config_revert, ConfigSyncListerInterface $config_sync_lister, ConfigSyncSnapshotterInterface $config_sync_snapshotter) {
+  public function __construct(ConfigRevertInterface $config_revert, ConfigSyncListerInterface $config_sync_lister, ConfigSyncSnapshotterInterface $config_sync_snapshotter, ConfigManagerInterface $config_manager) {
     $this->configRevert = $config_revert;
     $this->configSyncLister = $config_sync_lister;
     $this->configSyncSnapshotter = $config_sync_snapshotter;
+    $this->configManager = $config_manager;
   }
 
   /**
@@ -78,19 +89,19 @@ class ConfigSyncManager implements ConfigSyncManagerInterface {
     // Process create changes.
     if (!empty($changelist['create'])) {
       foreach ($changelist['create'] as $item_name) {
-        // Passing an empty string for the first argument indicates that
-        // the full name, including any configuration type prefix, is
-        // being passed in the second argument.
-        $this->configRevert->import('', $item_name);
+        if (!$entity_type = $this->configManager->getEntityTypeIdByName($name)) {
+          $entity_type = 'system.simple';
+        }
+        $this->configRevert->import($entity_type, $item_name);
       }
     }
     // Process update changes.
     if (!empty($changelist['update'])) {
       foreach ($changelist['update'] as $item_name) {
-        // Passing an empty string for the first argument indicates that
-        // the full name, including any configuration type prefix, is
-        // being passed in the second argument.
-        $this->configRevert->revert('', $item_name);
+        if (!$entity_type = $this->configManager->getEntityTypeIdByName($name)) {
+          $entity_type = 'system.simple';
+        }
+        $this->configRevert->revert($entity_type, $item_name);
       }
     }
     // Refresh the configuration snapshot.

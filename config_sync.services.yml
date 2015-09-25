@@ -13,6 +13,7 @@ services:
      - '@config_update.config_update'
      - '@config_sync.lister'
      - '@config_sync.snapshotter'
+     - '@config.manager'
   config_sync.snapshot_active_storage:
     class: Drupal\Core\Config\DatabaseStorage
     arguments:
