@@ -68,7 +68,7 @@ class ConfigSync extends FormBase {
     ];
     if (empty($changelist)) {
       $form['safe']['message'] = [
-        '#markup' => t('No safe changes available for import.'),
+        '#markup' => $this->t('No safe changes available for import.'),
       ];
     }
     else {
@@ -76,7 +76,6 @@ class ConfigSync extends FormBase {
 
       $form['safe']['message'] = [
         '#markup' => $this->formatPlural($count, '1 safe configuration change available for import.', '@count safe configuration changes available for import.'),
-    
       ];
 
       $form['safe']['safe_submit'] = [
@@ -94,7 +93,7 @@ class ConfigSync extends FormBase {
     ];
     if (empty($changelist)) {
       $form['all']['message'] = [
-        '#markup' => t('No changes available for import.'),
+        '#markup' => $this->t('No changes available for import.'),
       ];
     }
     else {
@@ -102,7 +101,6 @@ class ConfigSync extends FormBase {
 
       $form['all']['message'] = [
         '#markup' => $this->formatPlural($count, '1 configuration change available for import.', '@count configuration changes available for import.'),
-    
       ];
 
       $form['all']['safe_submit'] = [
