@@ -101,7 +101,7 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
     foreach (array('module', 'theme') as $type) {
       $names = array_keys($extension_config->get($type));
       foreach ($names as $name) {
-        if ($extension_changelist = $this->getExtensionChangelist($type, $name, $safe_only = TRUE)) {
+        if ($extension_changelist = $this->getExtensionChangelist($type, $name, $safe_only)) {
           if (!isset($changelist[$type])) {
             $changelist[$type] = array();
           }

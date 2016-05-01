@@ -73,7 +73,7 @@ class ConfigSyncManager implements ConfigSyncManagerInterface {
     $config_list = $this->configSyncLister->getFullChangelist($safe_only);
     foreach ($config_list as $type => $extensions) {
       foreach ($extensions as $name => $changelist) {
-        $this->updateExtension($type, $name, $changelist);
+        $this->updateExtension($type, $name, $changelist, $safe_only);
       }
     }
   }
