@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\Tests\config_sync\Unit\ConfigSyncMergerTest.
- */
-
 namespace Drupal\Tests\config_sync\Unit;
 
 use Drupal\config_sync\ConfigSyncMerger;

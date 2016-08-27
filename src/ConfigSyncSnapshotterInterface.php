@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\config_sync\ConfigSyncSnapshotterInterface.
- */
-
 namespace Drupal\config_sync;
 
 /**

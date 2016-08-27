@@ -1,18 +1,12 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\config_sync\ConfigSyncLister.
- */
-
 namespace Drupal\config_sync;
 
 use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Config\ConfigManagerInterface;
-use Drupal\Core\Config\FileStorage;
-use Drupal\Core\Config\InstallStorage;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\config_sync\ConfigSyncStorageComparer;
+use Drupal\config_sync\ConfigSyncUtility;
 use Drupal\config_update\ConfigDiffInterface;
 
 /**
@@ -95,13 +89,13 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
   /**
    * {@inheritdoc}
    */
-  public function getFullChangelist($safe_only = TRUE) {
+  public function getFullChangelist($safe_only = FALSE) {
     $changelist = array();
     $extension_config = \Drupal::config('core.extension');
     foreach (array('module', 'theme') as $type) {
       $names = array_keys($extension_config->get($type));
       foreach ($names as $name) {
-        if ($extension_changelist = $this->getExtensionChangelist($type, $name, $safe_only = TRUE)) {
+        if ($extension_changelist = $this->getExtensionChangelist($type, $name, $safe_only = FALSE)) {
           if (!isset($changelist[$type])) {
             $changelist[$type] = array();
           }
@@ -115,14 +109,9 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
   /**
    * {@inheritdoc}
    */
-  public function getExtensionChangelist($type, $name, $safe_only = TRUE) {
-    // drupal_get_path() expects 'profile' type for profile.
-    $path_type = $type == 'module' && $name == drupal_get_profile() ? 'profile' : $type;
-    $config_path = drupal_get_path($path_type, $name) . '/' . InstallStorage::CONFIG_INSTALL_DIRECTORY;
-
-    if (is_dir($config_path)) {
-      $install_storage = new FileStorage($config_path);
-      $snapshot_comparer = new ConfigSyncStorageComparer($install_storage, $this->snapshotExtensionStorage, $this->configManager, $this->configDiff);
+  public function getExtensionChangelist($type, $name, $safe_only = FALSE) {
+    if ($extension_storage = ConfigSyncUtility::getExtensionInstallStorage($type, $name)) {
+      $snapshot_comparer = new ConfigSyncStorageComparer($extension_storage, $this->snapshotExtensionStorage, $this->configManager, $this->configDiff);
       $snapshot_comparer->createChangelist();
       $changelist = $snapshot_comparer->getChangelist();
 
@@ -152,10 +141,8 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
     static $item_names = NULL;
 
     if (!isset($item_names)) {
-      $config_path = drupal_get_path('profile', drupal_get_profile()) . '/' . InstallStorage::CONFIG_INSTALL_DIRECTORY;
-      if (is_dir($config_path)) {
-        $install_storage = new FileStorage($config_path);
-        $item_names = $install_storage->listAll();
+      if ($extension_storage = ConfigSyncUtility::getExtensionInstallStorage($type, $name)) {
+        $item_names = $extension_storage->listAll();
       }
       else {
         $item_names = array();

@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\config_sync\ConfigSyncMerger.
- */
-
 namespace Drupal\config_sync;
 
 /**
