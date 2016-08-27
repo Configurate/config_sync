@@ -19,6 +19,7 @@ class ConfigSyncController extends ConfigController implements ContainerInjectio
     $class = parent::create($container);
     // Substitute our storage for the default one.
     $class->sourceStorage = $container->get('config_sync.merged_storage');
+    return $class;
   }
 
   /**
