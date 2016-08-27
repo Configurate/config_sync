@@ -119,7 +119,7 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
       $changelist = array_intersect_key($changelist, array_fill_keys(array('create', 'update'), NULL));
 
       // Unset any changes for components overridden by the install profile.
-      if (isset($changelist['update']) && !($type == 'module' && $name == drupal_get_profile())) {
+      if (isset($changelist['update']) && !($type == 'module' && $name == ConfigSyncUtility::drupalGetProfile())) {
         $install_profile_config = $this->listInstallProfileConfig();
         $changelist['update'] = array_diff($changelist['update'], $install_profile_config);
       }
@@ -141,7 +141,7 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
     static $item_names = NULL;
 
     if (!isset($item_names)) {
-      if ($extension_storage = ConfigSyncUtility::getExtensionInstallStorage($type, $name)) {
+      if ($extension_storage = ConfigSyncUtility::getExtensionInstallStorage('profile', ConfigSyncUtility::drupalGetProfile())) {
         $item_names = $extension_storage->listAll();
       }
       else {

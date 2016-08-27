@@ -122,7 +122,7 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
         foreach ($config_to_update as $item_name) {
           $previous = $this->extensionSnapshotStorage->read($item_name);
           $current = $extension_storage->read($item_name);
-          $active = $this->configManager->getConfigFactory()->get($name)->getRawData();
+          $active = $this->configManager->getConfigFactory()->get($item_name)->getRawData();
           $merged_value = $config_sync_merger->mergeConfigItemStates($previous, $current, $active);
           $this->mergedStorage->write($item_name, $merged_value);
         }
