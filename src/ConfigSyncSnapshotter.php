@@ -14,13 +14,6 @@ use Drupal\config_update\ConfigDiffInterface;
 class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
 
   /**
-   * The config differ.
-   *
-   * @var \Drupal\config_update\ConfigDiffInterface
-   */
-  protected $configDiff;
-
-  /**
    * The active configuration storage.
    *
    * @var \Drupal\Core\Config\StorageInterface
@@ -44,8 +37,6 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
   /**
    * Constructs a ConfigSyncSnapshotter object.
    *
-   * @param \Drupal\config_update\ConfigDiffInterface $config_diff
-   *   The config differ.
    * @param \Drupal\Core\Config\StorageInterface $active_storage
    *   The active storage.
    * @param \Drupal\Core\Config\StorageInterface $snapshot_extension_storage
@@ -54,7 +45,6 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
    *   The snapshot storage for the items from the active storage.
    */
   public function __construct(ConfigDiffInterface $config_diff, StorageInterface $active_storage, StorageInterface $snapshot_extension_storage, StorageInterface $snapshot_active_storage) {
-    $this->configDiff = $config_diff;
     $this->activeStorage = $active_storage;
     $this->snapshotExtensionStorage = $snapshot_extension_storage;
     $this->snapshotActiveStorage = $snapshot_active_storage;
