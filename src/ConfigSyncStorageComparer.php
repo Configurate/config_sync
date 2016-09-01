@@ -1,10 +1,5 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\config_sync\ConfigSyncStorageComparer.
- */
-
 namespace Drupal\config_sync;
 
 use Drupal\Core\Config\ConfigManagerInterface;

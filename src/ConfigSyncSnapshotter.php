@@ -1,15 +1,10 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\config_sync\ConfigSyncSnapshotter.
- */
-
 namespace Drupal\config_sync;
 
 use Drupal\Core\Config\FileStorage;
-use Drupal\Core\Config\InstallStorage;
 use Drupal\Core\Config\StorageInterface;
+use Drupal\config_sync\ConfigSyncUtility;
 use Drupal\config_update\ConfigDiffInterface;
 
 /**
@@ -70,7 +65,7 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
    */
   public function createExtensionSnapshot($type, $name) {
     // List the configuration items provided by the requested extension.
-    if ($extension_storage = $this->getExtensionInstallStorage($type, $name)) {
+    if ($extension_storage = ConfigSyncUtility::getExtensionInstallStorage($type, $name)) {
       $item_names = $extension_storage->listAll();
       foreach ($item_names as $item_name) {
         $this->createItemSnapshot($extension_storage, $item_name);
@@ -89,35 +84,14 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
    */
   function createItemSnapshot(FileStorage $extension_storage, $item_name) {
     // Snapshot the configuration item as provided by the extension.
-    $extension_value = $extension_storage->read($item_name);
-    $this->snapshotExtensionStorage->write($item_name, $extension_value);
+    if ($extension_value = $extension_storage->read($item_name)) {
+      $this->snapshotExtensionStorage->write($item_name, $extension_value);
+    }
 
     // Snapshot the configuration item as installed in the active storage.
-    $active_value = $this->activeStorage->read($item_name);
-    $this->snapshotActiveStorage->write($item_name, $active_value);
-  }
-
-  /**
-   * Returns a file storage object for a given extension's install directory,
-   * or FALSE if no such directory exists.
-   *
-   * @param string $type
-   *   The type of extension (module or theme).
-   * @param string $name
-   *   The machine name of the extension.
-   *
-   * @return
-   *   A FileStorage object for the given extension's install directory, or
-   *   FALSE if there is no such directory.
-   */
-  protected function getExtensionInstallStorage($type, $name) {
-    // drupal_get_path() expects 'profile' type for profile.
-    $path_type = $type == 'module' && $name == drupal_get_profile() ? 'profile' : $type;
-    $config_path = drupal_get_path($path_type, $name) . '/' . InstallStorage::CONFIG_INSTALL_DIRECTORY;
-    if (is_dir($config_path)) {
-      return new FileStorage($config_path);
+    if ($active_value = $this->activeStorage->read($item_name)) {
+      $this->snapshotActiveStorage->write($item_name, $active_value);
     }
-    return FALSE;
   }
 
   /**

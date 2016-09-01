@@ -1,16 +1,11 @@
 <?php
 
-/**
- * @file
- * Contains \Drupal\config_sync\ConfigSyncManagerInterface.
- */
-
 namespace Drupal\config_sync;
 
 /**
  * Provides methods for updating site configuration from extensions.
  */
-interface ConfigSyncManagerInterface {
+interface ConfigSyncInitializerInterface {
 
   /**
    * Applies a set of changes, creating and updating items in the active site
@@ -20,7 +15,7 @@ interface ConfigSyncManagerInterface {
    *   Whether to apply only changes considered safe to make. Defaults to
    *   TRUE.
    */
-  public function updateAll($safe_only = TRUE);
+  public function initializeAll($safe_only = FALSE);
 
   /**
    * Applies a set of changes, creating and updating items in the active site
@@ -38,6 +33,6 @@ interface ConfigSyncManagerInterface {
    *   Whether to apply only changes considered safe to make. Defaults to
    *   TRUE. Used only if $changelist is not specified.
    */
-  public function updateExtension($type, $name, array $changelist = array(), $safe_only = TRUE);
+  public function initializeExtension($type, $name, array $changelist = array(), $safe_only = FALSE);
 
 }
