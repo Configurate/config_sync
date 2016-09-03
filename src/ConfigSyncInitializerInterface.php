@@ -15,7 +15,7 @@ interface ConfigSyncInitializerInterface {
    *   Whether to apply only changes considered safe to make. Defaults to
    *   TRUE.
    */
-  public function initializeAll($safe_only = FALSE);
+  public function initializeAll($safe_only = TRUE);
 
   /**
    * Applies a set of changes, creating and updating items in the active site
@@ -33,6 +33,6 @@ interface ConfigSyncInitializerInterface {
    *   Whether to apply only changes considered safe to make. Defaults to
    *   TRUE. Used only if $changelist is not specified.
    */
-  public function initializeExtension($type, $name, array $changelist = array(), $safe_only = FALSE);
+  public function initializeExtension($type, $name, array $changelist = array(), $safe_only = TRUE);
 
 }

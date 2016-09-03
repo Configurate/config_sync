@@ -84,7 +84,7 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
   /**
    * {@inheritdoc}
    */
-  public function initializeAll($safe_only = FALSE) {
+  public function initializeAll($safe_only = TRUE) {
     $this->seedMergeStorage();
     $config_list = $this->configSyncLister->getFullChangelist($safe_only);
     foreach ($config_list as $type => $extensions) {
@@ -97,7 +97,7 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
   /**
    * {@inheritdoc}
    */
-  public function initializeExtension($type, $name, array $changelist = array(), $safe_only = FALSE) {
+  public function initializeExtension($type, $name, array $changelist = array(), $safe_only = TRUE) {
     // If no change list was passed, load one.
     if (empty($changelist)) {
       $changelist = $this->configSyncLister->getExtensionChangelist($type, $name, $safe_only);

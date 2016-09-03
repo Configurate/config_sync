@@ -18,7 +18,7 @@ interface ConfigSyncListerInterface {
    *   Associative array of configuration changes keyed by extension type
    *   (module or theme) in which values are arrays keyed by extension name.
    */
-  public function getFullChangelist($safe_only = FALSE);
+  public function getFullChangelist($safe_only = TRUE);
 
   /**
    * Returns a change list for a given module or theme.
@@ -35,6 +35,6 @@ interface ConfigSyncListerInterface {
    *   Associative array of configuration changes keyed by the type of change,
    *   with valid types being create and update.
    */
-  public function getExtensionChangelist($type, $name, $safe_only = FALSE);
+  public function getExtensionChangelist($type, $name, $safe_only = TRUE);
 
 }

@@ -89,7 +89,7 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
   /**
    * {@inheritdoc}
    */
-  public function getFullChangelist($safe_only = FALSE) {
+  public function getFullChangelist($safe_only = TRUE) {
     $changelist = array();
     $extension_config = \Drupal::config('core.extension');
     foreach (array('module', 'theme') as $type) {
@@ -109,7 +109,7 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
   /**
    * {@inheritdoc}
    */
-  public function getExtensionChangelist($type, $name, $safe_only = FALSE) {
+  public function getExtensionChangelist($type, $name, $safe_only = TRUE) {
     if ($extension_storage = ConfigSyncUtility::getExtensionInstallStorage($type, $name)) {
       $snapshot_comparer = new ConfigSyncStorageComparer($extension_storage, $this->snapshotExtensionStorage, $this->configManager, $this->configDiff);
       $snapshot_comparer->createChangelist();
@@ -188,14 +188,6 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
       );
     }
 
-    // Updates in the snapshot changes indicate customized items, which are
-    // not safe to update.
-    if (!empty($changelist['update'])) {
-      $changelist['update'] = array_diff(
-        $changelist['update'],
-        $snapshot_changelist['update']
-      );
-    }
   }
 
 }
