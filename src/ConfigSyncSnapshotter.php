@@ -78,8 +78,10 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
       $this->snapshotExtensionStorage->write($item_name, $extension_value);
     }
 
-    // Snapshot the configuration item as installed in the active storage.
-    if ($active_value = $this->activeStorage->read($item_name)) {
+    // Snapshot the configuration item as installed in the active storage if
+    // a snapshot doesn't already exist. The snapshot represents the original
+    // installed state.
+    if ($active_value = $this->activeStorage->read($item_name) && !$this->snapshotActiveStorage->read($item_name)) {
       $this->snapshotActiveStorage->write($item_name, $active_value);
     }
   }
@@ -109,8 +111,9 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
    * {@inheritdoc}
    */
   public function deleteSnapshot() {
+    // Do not delete values from ::snapshotActiveStorage because they represent
+    // the item as originally installed, so should not be refreshed.
     $this->snapshotExtensionStorage->deleteAll();
-    $this->snapshotActiveStorage->deleteAll();
   }
 
 }
