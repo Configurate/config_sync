@@ -127,8 +127,6 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
           $this->mergedStorage->write($item_name, $merged_value);
         }
       }
-      // Refresh the configuration snapshot.
-      $this->configSyncSnapshotter->createExtensionSnapshot($type, $name);
     }
   }
 
