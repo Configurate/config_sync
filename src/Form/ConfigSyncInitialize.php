@@ -5,7 +5,6 @@ namespace Drupal\config_sync\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\config_sync\ConfigSyncInitializerInterface;
-use Drupal\config_sync\ConfigSyncListerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class ConfigSyncInitialize extends FormBase {
@@ -64,7 +63,7 @@ class ConfigSyncInitialize extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->configSyncInitializer->initializeAll();
+    $this->configSyncInitializer->initialize();
     $form_state->setRedirect('config_sync.import');
   }
 

@@ -12,5 +12,5 @@
  * site.
  */
 function config_sync_install() {
-  \Drupal::service('config_sync.snapshotter')->createFullSnapshot();
+  \Drupal::service('config_sync.snapshotter')->refreshSnapshot();
 }

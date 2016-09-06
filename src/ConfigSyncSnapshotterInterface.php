@@ -9,30 +9,11 @@ namespace Drupal\config_sync;
 interface ConfigSyncSnapshotterInterface {
 
   /**
-   * Creates a snapshot of the configuration provided by a given extension.
+   * Takes a snapshot of configuration from all enabled modules and themes.
    *
-   * @param string $type
-   *   The type of extension (module or theme).
-   * @param string $name
-   *   The machine name of the extension.
+   * Only items not already in the snapshot storage are added.
    */
-  public function createExtensionSnapshot($type, $name);
-
-  /**
-   * Creates a snapshot of the configuration provided by a list of
-   * extensions.
-   *
-   * @param string $type
-   *   The type of extension (module or theme).
-   * @param string[] $extension_names
-   *   The machine names of the extensions.
-   */
-  public function createExtensionSnapshotMultiple($type, array $extension_names);
-
-  /**
-   * Creates a snapshot of all enabled modules and themes.
-   */
-  public function createFullSnapshot();
+  public function refreshSnapshot();
 
   /**
    * Deletes all records from the snapshot.

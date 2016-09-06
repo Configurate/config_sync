@@ -84,10 +84,10 @@ class ConfigSyncImport extends ConfigSync {
    */
   public static function finishBatch($success, $results, $operations) {
     parent::finishBatch($success, $results, $operations);
-
     if ($success) {
-      // Refresh the configuration snapshots.
-      \Drupal::service('config_sync.snapshotter')->createFullSnapshot();
+      // Refresh the configuration snapshot.
+      $this->configSyncSnapshotter->deleteSnapshot();
+      $this->configSyncSnapshotter->refreshSnapshot();
     }
   }
 

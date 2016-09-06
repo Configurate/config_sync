@@ -2,18 +2,11 @@ services:
   config_sync.initializer:
     class: Drupal\config_sync\ConfigSyncInitializer
     arguments:
-     - '@config_sync.lister'
+     - '@config_provider.collector'
      - '@config_sync.snapshotter'
      - '@config.storage'
      - '@config_sync.snapshot_extension_storage'
      - '@config_sync.merged_storage'
-     - '@config.manager'
-  config_sync.lister:
-    class: Drupal\config_sync\ConfigSyncLister
-    arguments:
-     - '@config.storage'
-     - '@config_sync.snapshot_extension_storage'
-     - '@config_sync.snapshot_active_storage'
      - '@config.manager'
   config_sync.snapshot_active_storage:
     class: Drupal\Core\Config\DatabaseStorage
@@ -39,7 +32,8 @@ services:
   config_sync.snapshotter:
     class: Drupal\config_sync\ConfigSyncSnapshotter
     arguments:
-     - '@config_update.config_diff'
+     - '@config_provider.collector'
      - '@config.storage'
      - '@config_sync.snapshot_extension_storage'
      - '@config_sync.snapshot_active_storage'
+     - '@config.manager'

@@ -2,12 +2,12 @@
 
 namespace Drupal\config_sync;
 
+use Drupal\config_provider\Plugin\ConfigCollectorInterface;
 use Drupal\config_sync\ConfigSyncInitializerInterface;
-use Drupal\config_sync\ConfigSyncListerInterface;
 use Drupal\config_sync\ConfigSyncMerger;
 use Drupal\config_sync\ConfigSyncSnapshotterInterface;
-use Drupal\config_sync\ConfigSyncUtility;
 use Drupal\Core\Config\ConfigManagerInterface;
+use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\Config\StorageInterface;
 
 /**
@@ -16,11 +16,11 @@ use Drupal\Core\Config\StorageInterface;
 class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
 
   /**
-   * The config sync lister.
+   * The configuration collector.
    *
-   * @var \Drupal\config_sync\ConfigSyncListerInterface
+   * @var \Drupal\config_provider\Plugin\ConfigCollectorInterface
    */
-  protected $configSyncLister;
+  protected $configCollector;
 
   /**
    * The config sync snapshotter.
@@ -41,7 +41,7 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
    *
    * @var \Drupal\Core\Config\StorageInterface
    */
-  protected $extensionSnapshotStorage;
+  protected $snapshotExtensionStorage;
 
   /**
    * The merged storage.
@@ -60,9 +60,9 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
   /**
    * Constructs a ConfigSyncInitializer object.
    *
-   * @param \Drupal\config_update\ConfigSyncListerInterface $config_sync_lister
-   *   The config lister.
-   * @param \Drupal\config_update\ConfigSyncSnapshotterInterface $config_sync_snapshotter
+   * @param \Drupal\config_provider\Plugin\ConfigCollectorInterface $config_collector
+   *   The config collector.
+   * @param \Drupal\config_sync\ConfigSyncSnapshotterInterface $config_sync_snapshotter
    *   The config snapshotter.
    * @param \Drupal\Core\Config\StorageInterface $target_storage
    *   The active storage.
@@ -71,12 +71,13 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
    * @param \Drupal\Core\Config\StorageInterface $source_storage
    *   The merged storage.
    * @param \Drupal\Core\Config\ConfigManagerInterface $config_manager
+   *   The configuration manager.
    */
-  public function __construct(ConfigSyncListerInterface $config_sync_lister, ConfigSyncSnapshotterInterface $config_sync_snapshotter, StorageInterface $active_storage, StorageInterface $extension_snapshot_storage, StorageInterface $merged_storage, ConfigManagerInterface $config_manager) {
-    $this->configSyncLister = $config_sync_lister;
+  public function __construct(ConfigCollectorInterface $config_collector, ConfigSyncSnapshotterInterface $config_sync_snapshotter, StorageInterface $active_storage, StorageInterface $snapshot_extension_storage, StorageInterface $merged_storage, ConfigManagerInterface $config_manager) {
+    $this->configCollector = $config_collector;
     $this->configSyncSnapshotter = $config_sync_snapshotter;
     $this->activeStorage = $active_storage;
-    $this->extensionSnapshotStorage = $extension_snapshot_storage;
+    $this->snapshotExtensionStorage = $snapshot_extension_storage;
     $this->mergedStorage = $merged_storage;
     $this->configManager = $config_manager;
   }
@@ -84,48 +85,41 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
   /**
    * {@inheritdoc}
    */
-  public function initializeAll($safe_only = TRUE) {
+  public function initialize($safe_only = TRUE) {
     $this->seedMergeStorage();
-    $config_list = $this->configSyncLister->getFullChangelist($safe_only);
-    foreach ($config_list as $type => $extensions) {
-      foreach ($extensions as $name => $changelist) {
-        $this->initializeExtension($type, $name, $changelist);
-      }
-    }
-  }
+    $active_config_items = $this->configManager->getConfigFactory()->listAll();
+    /* @var \Drupal\config_provider\InMemoryStorage $installable_config */
+    $installable_config = $this->configCollector->getInstallableConfig();
+    // Set up a storage comparer.
+    $storage_comparer = new StorageComparer(
+      $installable_config,
+      $this->snapshotExtensionStorage,
+      $this->configManager
+    );
+    $storage_comparer->createChangelist();
+    $changelist = $storage_comparer->getChangelist();
 
-  /**
-   * {@inheritdoc}
-   */
-  public function initializeExtension($type, $name, array $changelist = array(), $safe_only = TRUE) {
-    // If no change list was passed, load one.
-    if (empty($changelist)) {
-      $changelist = $this->configSyncLister->getExtensionChangelist($type, $name, $safe_only);
-    }
-    if ($extension_storage = ConfigSyncUtility::getExtensionInstallStorage($type, $name)) {
-      $active_config_items = $this->configManager->getConfigFactory()->listAll();
-      // Process changes.
-      if (!empty($changelist['create'])) {
-        // Don't attempt to create items that already exist.
-        $config_to_create = array_diff($changelist['create'], $active_config_items);
-        // To create, we simply save the new item to the merge storage.
-        foreach ($config_to_create as $item_name) {
-          $this->mergedStorage->write($item_name, $extension_storage->read($name));
-        }
+    // Process changes.
+    if (!empty($changelist['create'])) {
+      // Don't attempt to create items that already exist.
+      $config_to_create = array_diff($changelist['create'], $active_config_items);
+      // To create, we simply save the new item to the merge storage.
+      foreach ($config_to_create as $item_name) {
+        $this->mergedStorage->write($item_name, $installable_config->read($item_name));
       }
-      // Process update changes.
-      if (!empty($changelist['update'])) {
-        // Don't attempt to update items that don't exist.
-        $config_to_update = array_intersect($changelist['update'], $active_config_items);
-        $config_sync_merger = new ConfigSyncMerger();
-        // To update, we merge the value into that of the active storage.
-        foreach ($config_to_update as $item_name) {
-          $previous = $this->extensionSnapshotStorage->read($item_name);
-          $current = $extension_storage->read($item_name);
-          $active = $this->configManager->getConfigFactory()->get($item_name)->getRawData();
-          $merged_value = $config_sync_merger->mergeConfigItemStates($previous, $current, $active);
-          $this->mergedStorage->write($item_name, $merged_value);
-        }
+    }
+    // Process update changes.
+    if (!empty($changelist['update'])) {
+      // Don't attempt to update items that don't exist.
+      $config_to_update = array_intersect($changelist['update'], $active_config_items);
+      $config_sync_merger = new ConfigSyncMerger();
+      // To update, we merge the value into that of the active storage.
+      foreach ($config_to_update as $item_name) {
+        $previous = $this->snapshotExtensionStorage->read($item_name);
+        $current = $installable_config->read($item_name);
+        $active = $this->configManager->getConfigFactory()->get($item_name)->getRawData();
+        $merged_value = $config_sync_merger->mergeConfigItemStates($previous, $current, $active);
+        $this->mergedStorage->write($item_name, $merged_value);
       }
     }
   }
