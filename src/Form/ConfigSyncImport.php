@@ -3,6 +3,7 @@
 namespace Drupal\config_sync\Form;
 
 use Drupal\config\Form\ConfigSync;
+use Drupal\Core\Config\NullStorage;
 use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\Config\StorageInterface;
 use Drupal\Core\Form\FormStateInterface;
@@ -15,13 +16,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class ConfigSyncImport extends ConfigSync {
 
   /**
-   * The config sync snapshotter.
-   *
-   * @var \Drupal\config_sync\ConfigSyncSnapshotterInterface
-   */
-  protected $configSyncSnapshotter;
-
-  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -30,8 +24,7 @@ class ConfigSyncImport extends ConfigSync {
     $class->syncStorage = $container->get('config_sync.merged_storage');
     // Prevent snapshot messages by using a storage that won't have core.extension.
     // @see ConfigSync::buildForm().
-    $class->snapshotStorage = $container->get('config_sync.snapshot_extension_storage');
-    $class->configSyncSnapshotter = $container->get('config_sync.snapshotter');
+    $class->snapshotStorage = new NullStorage();
     return $class;
   }
 
@@ -86,8 +79,9 @@ class ConfigSyncImport extends ConfigSync {
     parent::finishBatch($success, $results, $operations);
     if ($success) {
       // Refresh the configuration snapshot.
-      $this->configSyncSnapshotter->deleteSnapshot();
-      $this->configSyncSnapshotter->refreshSnapshot();
+      $config_sync_snapshotter = \Drupal::service('config_sync.snapshotter');
+      $config_sync_snapshotter->deleteSnapshot();
+      $config_sync_snapshotter->refreshSnapshot();
     }
   }
 
