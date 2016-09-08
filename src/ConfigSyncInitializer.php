@@ -85,7 +85,7 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
   /**
    * {@inheritdoc}
    */
-  public function initialize($safe_only = TRUE) {
+  public function initialize() {
     $this->seedMergeStorage();
     $active_config_items = $this->configManager->getConfigFactory()->listAll();
     /* @var \Drupal\config_provider\InMemoryStorage $installable_config */

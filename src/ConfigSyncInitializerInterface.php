@@ -9,11 +9,7 @@ interface ConfigSyncInitializerInterface {
 
   /**
    * Initializes the merge storage with available configuration updates.
-   *
-   * @param boolean $safe_only
-   *   Whether to apply only changes considered safe to make. Defaults to
-   *   TRUE.
    */
-  public function initialize($safe_only = TRUE);
+  public function initialize();
 
 }
