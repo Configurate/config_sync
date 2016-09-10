@@ -24,4 +24,5 @@ function config_sync_themes_installed($theme_names) {
  */
 function config_sync_refresh_snapshot() {
   \Drupal::service('config_sync.snapshotter')->refreshSnapshot();
+  \Drupal::service('config_sync.merged_storage')->deleteAll();
 }
