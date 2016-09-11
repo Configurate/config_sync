@@ -85,7 +85,7 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
   /**
    * {@inheritdoc}
    */
-  public function initialize() {
+  public function initialize($retain_active_overrides = TRUE) {
     $this->seedMergeStorage();
     $active_config_items = $this->configManager->getConfigFactory()->listAll();
     /* @var \Drupal\config_provider\InMemoryStorage $installable_config */
@@ -115,10 +115,15 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
       $config_sync_merger = new ConfigSyncMerger();
       // To update, we merge the value into that of the active storage.
       foreach ($config_to_update as $item_name) {
-        $previous = $this->snapshotExtensionStorage->read($item_name);
         $current = $installable_config->read($item_name);
-        $active = $this->configManager->getConfigFactory()->get($item_name)->getRawData();
-        $merged_value = $config_sync_merger->mergeConfigItemStates($previous, $current, $active);
+        if ($retain_active_overrides) {
+          $previous = $this->snapshotExtensionStorage->read($item_name);
+          $active = $this->configManager->getConfigFactory()->get($item_name)->getRawData();
+          $merged_value = $config_sync_merger->mergeConfigItemStates($previous, $current, $active);
+        }
+        else {
+          $merged_value = $current;
+        }
         $this->mergedStorage->write($item_name, $merged_value);
       }
     }

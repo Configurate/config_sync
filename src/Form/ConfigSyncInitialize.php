@@ -44,6 +44,14 @@ class ConfigSyncInitialize extends FormBase {
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state) {
+
+    $form['retain_active_overrides'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Retain customizations'),
+      '#default_value' => TRUE,
+      '#description' => $this->t('If you select this option, configuration updates will be merged into the active configuration, retaining any customizations.'),
+    ];
+
     $form['message'] = [
       '#markup' => $this->t('Use the button below to initialize data to be imported from updated modules and themes.'),
     ];
@@ -63,7 +71,7 @@ class ConfigSyncInitialize extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $this->configSyncInitializer->initialize();
+    $this->configSyncInitializer->initialize($form_state->getValue('retain_active_overrides'));
     $form_state->setRedirect('config_sync.import');
   }
 
