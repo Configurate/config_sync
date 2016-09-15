@@ -13,7 +13,10 @@ interface ConfigSyncInitializerInterface {
    * @param bool $retain_active_overrides
    *   Whether to retain configuration customizations in the active
    *   configuration storage. Defaults to TRUE.
+   * @param array $extension_names
+   *   Array with keys of extension types ('module', 'theme') and values arrays
+   *   of extension names.
    */
-  public function initialize($retain_active_overrides = TRUE);
+  public function initialize($retain_active_overrides = TRUE, array $extension_names = []);
 
 }

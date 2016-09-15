@@ -8,6 +8,13 @@ services:
      - '@config_sync.snapshot_extension_storage'
      - '@config_sync.merged_storage'
      - '@config.manager'
+  config_sync.lister:
+    class: Drupal\config_sync\ConfigSyncLister
+    arguments:
+     - '@config_provider.collector'
+     - '@config.storage'
+     - '@config_sync.snapshot_extension_storage'
+     - '@config.manager'
   config_sync.snapshot_active_storage:
     class: Drupal\Core\Config\DatabaseStorage
     arguments:

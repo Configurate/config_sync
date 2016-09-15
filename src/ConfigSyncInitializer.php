@@ -9,6 +9,7 @@ use Drupal\config_sync\ConfigSyncSnapshotterInterface;
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\Config\StorageInterface;
+use Drupal\Core\Extension\Extension;
 
 /**
  * Returns responses for config module routes.
@@ -85,11 +86,21 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
   /**
    * {@inheritdoc}
    */
-  public function initialize($retain_active_overrides = TRUE) {
+  public function initialize($retain_active_overrides = TRUE, array $extension_names = []) {
+    // Convert incoming extension names into Extension objects.
+    $extensions = [];
+    foreach ($extension_names as $type => $names) {
+      foreach ($names as $name) {
+        $pathname = $this->drupalGetFilename($type, $name);
+        $extension = new Extension(\Drupal::root(), $type, $pathname);
+        $extensions[$name] = $extension;
+      }
+    }
+
     $this->seedMergeStorage();
     $active_config_items = $this->configManager->getConfigFactory()->listAll();
     /* @var \Drupal\config_provider\InMemoryStorage $installable_config */
-    $installable_config = $this->configCollector->getInstallableConfig();
+    $installable_config = $this->configCollector->getInstallableConfig($extensions);
     // Set up a storage comparer.
     $storage_comparer = new StorageComparer(
       $installable_config,
@@ -152,6 +163,26 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
         $merged_collection_storage->write($name, $collection_storage->read($name));
       }
     }
+  }
+
+  /**
+   * Wraps the function drupal_get_filename().
+   *
+   * @param $type
+   *   The type of the item; one of 'core', 'profile', 'module', 'theme', or
+   *   'theme_engine'.
+   * @param $name
+   *   The name of the item for which the filename is requested. Ignored for
+   *   $type 'core'.
+   * @param $filename
+   *   (Optional) The filename of the item if it is to be set explicitly rather
+   *   than by consulting the database.
+   *
+   * @return
+   *   The filename of the requested item or NULL if the item is not found.
+   */
+  protected function drupalGetFilename($type, $name, $filename = NULL) {
+    return drupal_get_filename($type, $name, $filename);
   }
 
 }
