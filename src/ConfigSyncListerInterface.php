@@ -30,6 +30,8 @@ interface ConfigSyncListerInterface {
    *
    * @return array
    *   Associative array of configuration changes keyed by the type of change
+   *   in which values are arrays of configuration item labels keyed by item
+   *   name.
    */
   public function getExtensionChangelist($type, $name);
 

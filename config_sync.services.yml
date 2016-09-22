@@ -12,6 +12,7 @@ services:
     class: Drupal\config_sync\ConfigSyncLister
     arguments:
      - '@config_provider.collector'
+     - '@config_update.config_list'
      - '@config.storage'
      - '@config_sync.snapshot_extension_storage'
      - '@config.manager'
