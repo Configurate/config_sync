@@ -237,8 +237,10 @@ class ConfigSyncInitialize extends FormBase {
     $rows = [];
 
     $change_type_labels = [
+      // Match the labels used by core.
+      // @see ConfigSync::buildForm().
       'create' => $this->t('New'),
-      'update' => $this->t('Updated'),
+      'update' => $this->t('Changed'),
     ];
 
     // List config types for order.
