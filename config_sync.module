@@ -5,6 +5,36 @@
  * Manage synchronizing configuration from extensions.
  */
 
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function config_sync_help($route_name, RouteMatchInterface $route_match) {
+  switch ($route_name) {
+    case 'help.page.config_sync':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The Configuration Synchronizer module provides a user interface for importing configuration changes from updated modules and themes.') . '</p>';
+      $output .= '<p>' . t('When you update to a new version of a module or theme, it may come with configuration changes. For example, if you previously installed an <em>Event</em> module that provided an <em>Event</em> content type and related fields, some of those fields may have changed in the new version, while new fields may have been added. With Configuration Synchronizer you can review and import those changes.') . '</p>';
+      $output .= '<h3>' . t('Usage') . '</h3>';
+      $output .= '<p>' . t('You can review available updates from your installed modules and themes on the <a href=":url">Synchronize from extensions</a> page.', array(':url' => \Drupal::url('config_sync.initialize'))) . ' </p>';
+      return $output;
+
+    case 'config_sync.initialize':
+      $output = '';
+      $output .= '<p>' . t('Any available configuration updates from installed modules or themes will be displayed here.') . '</p>';
+      $output .= '<p>' . t('Importing these changes is a two step process. First, after reviewing the list of available changes, you can use the <em>Initialize</em> button to proceed. You will be forwarded to an import screen where you can run the imports.') . '</p>';
+      $output .= '<p>' . t('By default, changes will be merged into the active configuration so as to retain any customizations you\'ve made. For example, if you\'ve edited the label of a field for which updates are available, that edit will be retained. If you prefer to overwrite customizations, uncheck the <em>Retain customizations</em> checkbox.') . '</p>';
+      return $output;
+
+    case 'config_sync.import':
+      $output = '';
+      $output .= '<p>' . t('Compare the configuration from updated modules and themes with the active configuration before completing the import.') . '</p>';
+      return $output;
+  }
+}
+
 /**
  * Implements hook_modules_installed().
  */
