@@ -152,8 +152,8 @@ class ConfigSyncLister implements ConfigSyncListerInterface {
         else {
           $config = $installable_config->read($item_name);
           $definition = $this->configUpdateLister->getType($config_type);
-          $label_key = $definition->getKey('label');
-          $label = $config[$label_key];
+          $key = $definition->getKey('label') ?: $definition->getKey('id');
+          $label = $config[$key];
         }
         $return[$change_type][$item_name] = $label;
       }
