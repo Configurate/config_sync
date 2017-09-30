@@ -87,6 +87,8 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
    * {@inheritdoc}
    */
   public function initialize($retain_active_overrides = TRUE, array $extension_names = []) {
+    $config_factory = $this->configManager->getConfigFactory();
+
     // Convert incoming extension names into Extension objects.
     $extensions = [];
     foreach ($extension_names as $type => $names) {
@@ -98,7 +100,7 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
     }
 
     $this->seedMergeStorage();
-    $active_config_items = $this->configManager->getConfigFactory()->listAll();
+    $active_config_items = $config_factory->listAll();
     /* @var \Drupal\config_provider\InMemoryStorage $installable_config */
     $installable_config = $this->configCollector->getInstallableConfig($extensions);
     // Set up a storage comparer.
@@ -129,11 +131,18 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
         $current = $installable_config->read($item_name);
         if ($retain_active_overrides) {
           $previous = $this->snapshotExtensionStorage->read($item_name);
-          $active = $this->configManager->getConfigFactory()->get($item_name)->getRawData();
+          $active = $config_factory->get($item_name)->getRawData();
           $merged_value = $config_sync_merger->mergeConfigItemStates($previous, $current, $active);
         }
         else {
           $merged_value = $current;
+        }
+        // If we do not have a site UUID this means we are merging updates from
+        // an install profile. Make sure the site UUID is set in this case.
+        // Otherwise, the storage comparer will think we are installing config
+        // from a different website and will reject the changes.
+        if ($item_name === 'system.site' && empty($merged_value['uuid'])) {
+          $merged_value['uuid'] = $config_factory->get('system.site')->get('uuid');
         }
         $this->mergedStorage->write($item_name, $merged_value);
       }
