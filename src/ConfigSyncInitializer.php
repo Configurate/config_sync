@@ -62,11 +62,11 @@ class ConfigSyncInitializer implements ConfigSyncInitializerInterface {
    *   The config collector.
    * @param \Drupal\config_sync\ConfigSyncSnapshotterInterface $config_sync_snapshotter
    *   The config snapshotter.
-   * @param \Drupal\Core\Config\StorageInterface $target_storage
+   * @param \Drupal\Core\Config\StorageInterface $active_storage
    *   The active storage.
-   * @param \Drupal\Core\Config\StorageInterface $source_storage
+   * @param \Drupal\Core\Config\StorageInterface $snapshot_extension_storage
    *   The extension snapshot storage.
-   * @param \Drupal\Core\Config\StorageInterface $source_storage
+   * @param \Drupal\Core\Config\StorageInterface $merged_storage
    *   The merged storage.
    * @param \Drupal\Core\Config\ConfigManagerInterface $config_manager
    *   The configuration manager.
