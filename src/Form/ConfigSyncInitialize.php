@@ -52,9 +52,9 @@ class ConfigSyncInitialize extends FormBase {
    * Constructs a new ConfigSync object.
    *
    * @param \Drupal\config_sync\ConfigSyncInitializerInterface $config_sync_initializer
-   *   The configuration syncronizer initializer.
+   *   The configuration synchronizer initializer.
    * @param \Drupal\config_sync\ConfigSyncListerInterface $config_sync_lister
-   *   The configuration syncronizer lister.
+   *   The configuration synchronizer lister.
    * @param \Drupal\config_update\ConfigListInterface $config_update_lister
    *   The configuration update lister.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
