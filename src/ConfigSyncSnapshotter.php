@@ -4,7 +4,6 @@ namespace Drupal\config_sync;
 
 use Drupal\config_provider\InMemoryStorage;
 use Drupal\config_provider\Plugin\ConfigCollectorInterface;
-use Drupal\config_sync\ConfigSyncSnapshotterInterface;
 use Drupal\Core\Config\ConfigManagerInterface;
 use Drupal\Core\Config\StorageComparer;
 use Drupal\Core\Config\StorageInterface;
