@@ -2,6 +2,8 @@
 
 namespace Drupal\config_sync;
 
+use Symfony\Component\Yaml\Inline;
+
 /**
  * Provides helper functions for merging configuration items.
  */
@@ -31,16 +33,7 @@ class ConfigSyncMerger {
 
     foreach ($states as $array) {
       // Analyze the array to determine if we should preserve integer keys.
-      // Use the same logic as when dumping into Yaml.
-      // See \Symfony\Component\Yaml\Inline::dumpArray().
-      $keys = array_keys($array);
-      $keys_count = count($keys);
-      if ((1 === $keys_count && '0' == $keys[0])
-          || ($keys_count > 1 && array_reduce($keys, function ($v, $w) { return (int) $v + $w; }, 0) === $keys_count * ($keys_count - 1) / 2)
-      ) {
-        continue;
-      }
-      else {
+      if (Inline::isHash($array)) {
         // If any of the states is associative, treat the item as associative.
         $is_associative = TRUE;
         break;
