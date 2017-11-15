@@ -5,6 +5,7 @@
  * Manage synchronizing configuration from extensions.
  */
 
+use Drupal\Core\Extension\Extension;
 use Drupal\Core\Routing\RouteMatchInterface;
 
 /**
@@ -39,20 +40,44 @@ function config_sync_help($route_name, RouteMatchInterface $route_match) {
  * Implements hook_modules_installed().
  */
 function config_sync_modules_installed($module_names) {
-  config_sync_refresh_snapshot();
+  config_sync_refresh_snapshot(config_sync_get_extensions($module_names, 'module'));
 }
 
 /**
  * Implements hook_themes_installed().
  */
 function config_sync_themes_installed($theme_names) {
-  config_sync_refresh_snapshot();
+  config_sync_refresh_snapshot(config_sync_get_extensions($theme_names, 'theme'));
+}
+
+/**
+ * Returns an array of Extension objects of the given type.
+ *
+ * @param array $names
+ *   An array of extension names.
+ * @param $type
+ *   The type of extension to return.
+ *
+ * @return \Drupal\Core\Extension\Extension[]
+ *   The requested extensions.
+ */
+function config_sync_get_extensions(array $names, $type) {
+  $extensions = [];
+  foreach ($names as $name) {
+    $pathname = drupal_get_filename($type, $name);
+    $extensions[] = new Extension(\Drupal::root(), $type, $pathname);
+  }
+  return $extensions;
 }
 
 /**
  * Refreshes the configuration snapshot.
+ *
+ * @param \Drupal\Core\Extension\Extension[] $extensions
+ *   The list of extensions to refresh. If omitted the entire snapshot will be
+ *   refreshed.
  */
-function config_sync_refresh_snapshot() {
-  \Drupal::service('config_sync.snapshotter')->refreshSnapshot();
+function config_sync_refresh_snapshot(array $extensions = []) {
+  \Drupal::service('config_sync.snapshotter')->refreshSnapshot($extensions);
   \Drupal::service('config_sync.merged_storage')->deleteAll();
 }

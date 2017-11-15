@@ -74,9 +74,9 @@ class ConfigSyncSnapshotter implements ConfigSyncSnapshotterInterface {
   /**
    * {@inheritdoc}
    */
-  public function refreshSnapshot() {
+  public function refreshSnapshot(array $extensions = []) {
     /* @var \Drupal\config_provider\InMemoryStorage $installable_config */
-    $installable_config = $this->configCollector->getInstallableConfig();
+    $installable_config = $this->configCollector->getInstallableConfig($extensions);
     // Set up a storage comparer.
     $storage_comparer = new StorageComparer(
       $installable_config,
